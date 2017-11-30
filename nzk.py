@@ -897,7 +897,7 @@ class Scientist(ABC):
             # print(i, c)
             # print(new_repr)
 
-            if i >= 200 or c >= self.cutoff:
+            if i >= 30 or c >= self.cutoff:
                 done = True
 
 
@@ -1097,11 +1097,15 @@ S = None
 def setRule(rule):
     global G
     global S
-
-    rule = eleusis.parse(rule)
-    first = random.choice(legal_cards(rule, None, None))
-    second = random.choice(legal_cards(rule, first, None))
-
+    try:
+        rule = eleusis.parse(rule)
+        first = random.choice(legal_cards(rule, None, None))
+        second = random.choice(legal_cards(rule, first, None))
+    except:
+        card1 = input('Please input the first card:')
+        card2 = input('Please input the second card:')
+        first = card1
+        second = card2
     G = Game(rule, first, second)
     S = Scientist(G, [unigram, bigram])
 
@@ -1139,7 +1143,7 @@ if __name__ == '__main__':
     random.seed(seed)
     print('==== {0} ====\n'.format(seed))
 
-    setRule('equal(color(current), B)')
+    setRule('equal(color(previous), color(current))')
     print('rule:', rule())
     print('hypothesis:', scientist())
     print('boardState:', boardState())
