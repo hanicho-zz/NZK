@@ -35,7 +35,7 @@ class Player(object):
         
         if (len(self.scientist.belief) < self.threshold
             and self.counter > 5):
-            return self.scientist.hypothesis
+            return str(self.scientist.hypothesis)
         
         if(len(self.hand)):
 #            card_list = []
@@ -67,7 +67,7 @@ class Player(object):
             return playCard
         else:
             print('Out of cards!')
-            return self.scientist.hypothesis
+            return str(self.scientist.hypothesis)
             
     def update_card_to_boardstate(self, card, result):
         self.counter += 1
