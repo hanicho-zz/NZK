@@ -625,46 +625,46 @@ class Game(ABC):
 
         return self.history[-2][0]
 
-    def score(self, rule, hypothesis):
-        """Computes the score of a given hypothesis
-
-        """
-
-        hist = self.history
-        score = 0
-        covers = True
-
-        for i in range(len(hist)):
-            # +1 for every successful play over 20 and under 200
-            # +2 for every failed play
-            if i >= 19 and i < 200:
-                if hist[i][1]:
-                    score += 1
-                else:
-                    score += 2
-
-            previous2 = hist[i-2][0] if i >= 2 else None
-            previous = hist[i-1][0] if i >= 1 else None
-            current = hist[i][0]
-
-            if 'previous2' in str(hypothesis) and previous2 is None:
-                continue
-            elif 'previous' in str(hypothesis) and previous is None:
-                continue
-
-            if (covers and
-                hypothesis.evaluate((previous2, previous, current)) != hist[i][1]):
-                covers = False
-
-        # +15 for a rule that is not equivalent to the correct rule
-        # +30 for a rule that does not describe all cards on the board
-        if not covers:
-            score += 45
-        else:
-            if not Game._rules_eq(rule, hypothesis):
-                score += 15
-
-        return score
+#    def score(self, rule, hypothesis):
+#        """Computes the score of a given hypothesis
+#
+#        """
+#
+#        hist = self.history
+#        score = 0
+#        covers = True
+#
+#        for i in range(len(hist)):
+#            # +1 for every successful play over 20 and under 200
+#            # +2 for every failed play
+#            if i >= 19 and i < 200:
+#                if hist[i][1]:
+#                    score += 1
+#                else:
+#                    score += 2
+#
+#            previous2 = hist[i-2][0] if i >= 2 else None
+#            previous = hist[i-1][0] if i >= 1 else None
+#            current = hist[i][0]
+#
+#            if 'previous2' in str(hypothesis) and previous2 is None:
+#                continue
+#            elif 'previous' in str(hypothesis) and previous is None:
+#                continue
+#
+#            if (covers and
+#                hypothesis.evaluate((previous2, previous, current)) != hist[i][1]):
+#                covers = False
+#
+#        # +15 for a rule that is not equivalent to the correct rule
+#        # +30 for a rule that does not describe all cards on the board
+#        if not covers:
+#            score += 45
+#        else:
+#            if not Game._rules_eq(rule, hypothesis):
+#                score += 15
+#
+#        return score
 
     def grams(self, n):
         """Compute n-grams of the board, mapped to legality

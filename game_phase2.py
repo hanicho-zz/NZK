@@ -27,28 +27,31 @@ class Player(object):
         self.hand = [generate_random_card() for i in range(14)]
         self.game = nzk.Game(cards[0], cards[1])
         self.game.play(cards[2], True)
-        
+        self.played = [] # Keeps track of the indexes in the history that are ours
+
         self.scientist = nzk.Scientist(self.game, [nzk.unigram, nzk.bigram, nzk.trigram])
-        self.threshold = 7
+        self.threshold = 5
         self.counter = 0
 
     def play(self):
         print('Play time!')
-        
+
         if (len(self.scientist.belief) < self.threshold
             and self.counter > 5):
             return str(self.scientist.hypothesis)
-        
-        if(len(self.hand)):            
+
+        if(len(self.hand)):
             playCard = self.scientist.choice(self.hand)
             del self.hand[self.hand.index(playCard)]
-            
+
             print ('Playing card:', playCard)
+            self.played.append(len(self.game.history))
+            
             return playCard
         else:
             print('Out of cards!')
             return str(self.scientist.hypothesis)
-            
+
     def update_card_to_boardstate(self, card, result):
         self.counter += 1
         self.game.play(card, result)
@@ -82,12 +85,12 @@ class Adversary(object):
             return rule[:-2] + ")"
         else:
             return self.hand[randint(0, len(self.hand) - 1)]
-        
+
 
 # The players in the game
 # Set a rule for testing
 rule = 'equal(color(previous), color(current))'
-cards = ["10H", "2C", "4S"]
+cards = ["10C", "2C", "4S"]
 tree = new_eleusis.parse(rule)
 
 # player and adversary
@@ -154,7 +157,7 @@ for round_num in range(14):
                 cards.append(ad3_card_rule)
         else:
             raise Exception('adv3 exception')
-            
+
     except Exception as e:
         print(e)
         game_ended = True
@@ -163,7 +166,49 @@ for round_num in range(14):
 # Everyone has to guess a rule
 rule_player = player.play()
 
+def score(player, rule):
+    """Computes the score of a given hypothesis
+
+    """
+
+    hist = player.game.history
+    score = 0
+    covers = True
+
+    for i in range(len(hist)):
+        # +1 for every successful play over 20 and under 200
+        # +2 for every failed play
+        if i >= 19 and i < 200 and i in player.played:
+            if hist[i][1]:
+                score += 1
+            else:
+                score += 2
+
+        previous2 = hist[i-2][0] if i >= 2 else None
+        previous = hist[i-1][0] if i >= 1 else None
+        current = hist[i][0]
+
+        if 'previous2' in str(player.scientist.hypothesis) and previous2 is None:
+            continue
+        elif 'previous' in str(player.scientist.hypothesis) and previous is None:
+            continue
+
+        if (covers and
+            player.scientist.hypothesis.evaluate((previous2, previous, current)) != hist[i][1]):
+            covers = False
+
+    # +15 for a rule that is not equivalent to the correct rule
+    # +30 for a rule that does not describe all cards on the board
+    if not covers:
+        score += 45
+    else:
+        if not nzk.Game._rules_eq(rule, player.scientist.hypothesis):
+            score += 15
+
+    return score
+
 # Check if the guessed rule is correct and print the score
-print('score:', player.game.score(tree, player.scientist.hypothesis))
+# print('score:', player.game.score(tree, player.scientist.hypothesis))
+print('Score:', score(player, tree))
 print('True rule:', tree)
 print('Final Hypothesis:', player.scientist.hypothesis)
