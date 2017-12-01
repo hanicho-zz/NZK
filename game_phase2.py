@@ -27,7 +27,7 @@ class Player(object):
         self.hand = [generate_random_card() for i in range(14)]
         self.game = nzk.Game(cards[0], cards[1])
         self.scientist = nzk.Scientist(self.game, [nzk.unigram, nzk.bigram, nzk.trigram])
-        self.threshold = 10
+        self.threshold = 7
         self.counter = 0
 
     def play(self):
@@ -37,29 +37,7 @@ class Player(object):
             and self.counter > 5):
             return str(self.scientist.hypothesis)
         
-        if(len(self.hand)):
-#            card_list = []
-#            for (histitem, legality) in list(reversed(self.game.history)):
-#                if(legality) and len(card_list) < 2:
-#                    card_list.append(histitem)
-#                elif len(card_list)>=2:
-#                    break 
-#                else:
-#                    continue
-#                
-#            for itemNum in range(len(self.hand)):
-#                card_tuple = tuple(reversed([self.hand[itemNum]] + card_list))
-#                result = tree.evaluate(card_tuple)
-#                
-#                if not result:
-#                    #Playing cards which are illegal with hypothesis
-#                    playCard = self.hand.pop(itemNum)
-#                    break
-#                else:
-#                    #If all cards are legal, just pop the last one
-#                    playCard = self.hand.pop()
-#                    break
-            
+        if(len(self.hand)):            
             playCard = self.scientist.choice(self.hand)
             del self.hand[self.hand.index(playCard)]
             
@@ -183,6 +161,6 @@ for round_num in range(14):
 rule_player = player.play()
 
 # Check if the guessed rule is correct and print the score
-# print('score:', player.game.score(player.scientist.hypothesis))
+print('score:', player.game.score(tree, player.scientist.hypothesis))
 print('True rule:', tree)
 print('Final Hypothesis:', player.scientist.hypothesis)
