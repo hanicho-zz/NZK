@@ -33,7 +33,7 @@ class Player(object):
     def play(self):
         print('Play time!')
         
-        if (len(self.scientist.hypothesis) < self.threshold
+        if (len(self.scientist.belief) < self.threshold
             and self.counter > 5):
             return self.scientist.hypothesis
         

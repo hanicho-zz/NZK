@@ -780,12 +780,16 @@ class Scientist(ABC):
         return '<Scientist {0}>'.format(self.hypothesis)
 
     @property
+    def belief(self):
+        return min(self.models, key=lambda model: len(model))
+    
+    @property
     def hypothesis(self):
         """Returns the most concise rule currently held
 
         """
 
-        return min(self.models, key=lambda model: len(model)).rule
+        return self.belief.rule
 
     def choice(self, hand):
         """Selects a card to play
