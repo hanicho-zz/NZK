@@ -13,8 +13,6 @@ import new_eleusis
 
 global game_ended
 game_ended = False
-global c
-c = 1
 
 def generate_random_card():
     values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
@@ -26,16 +24,20 @@ class Player(object):
     'cards' is a list of three valid cards to be given by the dealer at the beginning of the game.
     """
     def __init__(self, cards):
-        self.board_state = cards;
         self.hand = [generate_random_card() for i in range(14)]
         self.game = nzk.Game(cards[0], cards[1])
         self.scientist = nzk.Scientist(self.game, [nzk.unigram, nzk.bigram, nzk.trigram])
-        self._belief = None # Holds the last good hypothesis
+        self.threshold = 6
+        self.counter = 0
 
     def play(self):
         print('Play time!')
+        
+        if (len(self.scientist.hypothesis) < self.threshold
+            and self.counter > 5):
+            return self.scientist.hypothesis
+        
         if(len(self.hand)):
-            
 #            card_list = []
 #            for (histitem, legality) in list(reversed(self.game.history)):
 #                if(legality) and len(card_list) < 2:
@@ -61,9 +63,6 @@ class Player(object):
             playCard = self.scientist.choice(self.hand)
             del self.hand[self.hand.index(playCard)]
             
-            #if str(self._belief) == str(self.scientist.hypothesis):
-            #    return self.scientist.hypothesis
-            
             print ('Playing card:', playCard)
             return playCard
         else:
@@ -71,10 +70,7 @@ class Player(object):
             return self.scientist.hypothesis
             
     def update_card_to_boardstate(self, card, result):
-        global c
-        c += 1
-        print(c)
-        self._belief = self.scientist.hypothesis
+        self.counter += 1
         self.game.play(card, result)
         self.scientist.update()
 
@@ -176,7 +172,6 @@ for round_num in range(14):
                 del cards[0]
                 cards.append(ad3_card_rule)
         else:
-            print(ad3_card_rule)
             raise Exception('adv3 exception')
             
     except Exception as e:
