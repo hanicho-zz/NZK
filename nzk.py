@@ -4,7 +4,7 @@
 __authors__ = ['Nicholas Haltmeyer <hanicho1@umbc.edu>',
                'Zeyu Ning          <zeyning1@umbc.edu>',
                'Kaustubh Agrahari  <kaus1@umbc.edu>']
-__version__ = 'Phase I'
+__version__ = 'Phase II'
 __license__ = 'GPLv3'
 
 import copy

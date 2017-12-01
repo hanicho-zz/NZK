@@ -4,7 +4,7 @@
 __authors__ = ['Nicholas Haltmeyer <hanicho1@umbc.edu>',
                'Zeyu Ning          <zeyning1@umbc.edu>',
                'Kaustubh Agrahari  <kaus1@umbc.edu>']
-__version__ = 'Phase I'
+__version__ = 'Phase II'
 __license__ = 'GPLv3'
 
 import nzk
@@ -28,6 +28,7 @@ class Player(object):
         self.game = nzk.Game(cards[0], cards[1])
         self.game.play(cards[2], True)
         self.played = [] # Keeps track of the indexes in the history that are ours
+        self.ended = False
 
         self.scientist = nzk.Scientist(self.game, [nzk.unigram, nzk.bigram, nzk.trigram])
         self.threshold = 5
@@ -38,6 +39,7 @@ class Player(object):
 
         if (len(self.scientist.belief) < self.threshold
             and self.counter > 5):
+            self.ended = True
             return str(self.scientist.hypothesis)
 
         if(len(self.hand)):
@@ -50,6 +52,7 @@ class Player(object):
             return playCard
         else:
             print('Out of cards!')
+            self.ended = True
             return str(self.scientist.hypothesis)
 
     def update_card_to_boardstate(self, card, result):
@@ -201,9 +204,13 @@ def score(player, rule):
     # +30 for a rule that does not describe all cards on the board
     if not covers:
         score += 45
+    elif not nzk.Game._rules_eq(rule, player.scientist.hypothesis):
+        score += 15
     else:
-        if not nzk.Game._rules_eq(rule, player.scientist.hypothesis):
-            score += 15
+        score -= 75
+        
+        if player.ended:
+            score -= 25
 
     return score
 
