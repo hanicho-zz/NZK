@@ -27,7 +27,7 @@ class Player(object):
         self.hand = [generate_random_card() for i in range(14)]
         self.game = nzk.Game(cards[0], cards[1])
         self.scientist = nzk.Scientist(self.game, [nzk.unigram, nzk.bigram, nzk.trigram])
-        self.threshold = 6
+        self.threshold = 10
         self.counter = 0
 
     def play(self):
