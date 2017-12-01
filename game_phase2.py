@@ -1,17 +1,25 @@
-# Put your program name in place of program_name
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+__authors__ = ['Nicholas Haltmeyer <hanicho1@umbc.edu>',
+               'Zeyu Ning          <zeyning1@umbc.edu>',
+               'Kaustubh Agrahari  <kaus1@umbc.edu>']
+__version__ = 'Phase I'
+__license__ = 'GPLv3'
 
 import nzk
 from random import randint
 import new_eleusis
+
 global game_ended
 game_ended = False
-
+global c
+c = 1
 
 def generate_random_card():
     values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
     suits = ["S", "H", "D", "C"]
     return values[randint(0, len(values) - 1)] + suits[randint(0, len(suits) - 1)]
-
 
 class Player(object):
     """
@@ -20,49 +28,57 @@ class Player(object):
     def __init__(self, cards):
         self.board_state = cards;
         self.hand = [generate_random_card() for i in range(14)]
-        global G
-        global S
-        G = nzk.Game(tree, cards[-2], cards[-1])
-        S = nzk.Scientist(G, [nzk.unigram, nzk.bigram])
+        self.game = nzk.Game(cards[0], cards[1])
+        self.scientist = nzk.Scientist(self.game, [nzk.unigram, nzk.bigram, nzk.trigram])
+        self._belief = None # Holds the last good hypothesis
 
     def play(self):
         print('Play time!')
         if(len(self.hand)):
-            card_list = []
-            for (histitem, legality) in list(reversed(G.history)):
-                #print(legality)
-                if(legality) and len(card_list)<2:
-                    card_list.append(histitem)
-                elif len(card_list)>=2:
-                    break 
-                else:
-                    continue
-            for itemNum in range(len(self.hand)):
-                card_tuple = tuple(reversed([self.hand[itemNum]] + card_list))
-                result = tree.evaluate(card_tuple)
-                if not result:
-                    #Playing cards which are illegal with hypothesis
-                    playCard = self.hand.pop(itemNum)
-                    break
-                else:
-                    #If all cards are legal, just pop the last one
-                    playCard = self.hand.pop()
-                    break
+            
+#            card_list = []
+#            for (histitem, legality) in list(reversed(self.game.history)):
+#                if(legality) and len(card_list) < 2:
+#                    card_list.append(histitem)
+#                elif len(card_list)>=2:
+#                    break 
+#                else:
+#                    continue
+#                
+#            for itemNum in range(len(self.hand)):
+#                card_tuple = tuple(reversed([self.hand[itemNum]] + card_list))
+#                result = tree.evaluate(card_tuple)
+#                
+#                if not result:
+#                    #Playing cards which are illegal with hypothesis
+#                    playCard = self.hand.pop(itemNum)
+#                    break
+#                else:
+#                    #If all cards are legal, just pop the last one
+#                    playCard = self.hand.pop()
+#                    break
+            
+            playCard = self.scientist.choice(self.hand)
+            del self.hand[self.hand.index(playCard)]
+            
+            #if str(self._belief) == str(self.scientist.hypothesis):
+            #    return self.scientist.hypothesis
+            
             print ('Playing card:', playCard)
             return playCard
         else:
             print('Out of cards!')
-       #  update board state
+            return self.scientist.hypothesis
+            
     def update_card_to_boardstate(self, card, result):
-        G.play(card)
-
-
-
-
+        global c
+        c += 1
+        print(c)
+        self._belief = self.scientist.hypothesis
+        self.game.play(card, result)
+        self.scientist.update()
 
 class Adversary(object):
-
-
     def __init__(self):
         self.hand = [generate_random_card() for i in range(14)]
 
@@ -89,25 +105,19 @@ class Adversary(object):
             return rule[:-2] + ")"
         else:
             return self.hand[randint(0, len(self.hand) - 1)]
-
+        
 
 # The players in the game
-
-
 # Set a rule for testing
 rule = 'equal(color(previous), color(current))'
 cards = ["10H", "2C", "4S"]
 tree = new_eleusis.parse(rule)
 
-
 # player and adversary
-
 player = Player(cards)
 adversary1 = Adversary()
 adversary2 = Adversary()
 adversary3 = Adversary()
-
-# The three cards that adhere to the rule
 
 
 """
@@ -130,7 +140,7 @@ for round_num in range(14):
                  cards.append(player_card_rule)
             # player updating board state based on card played and result
         else:
-            raise Exception('')
+            raise Exception('player1 exception')
 
         # Adversary 1 plays
         ad1_card_rule = adversary1.play()
@@ -141,9 +151,8 @@ for round_num in range(14):
             if result:
                 del cards[0]
                 cards.append(ad1_card_rule)
-
         else:
-            raise Exception('')
+            raise Exception('adv1 exception')
 
         # Adversary 2 plays
         ad2_card_rule = adversary2.play()
@@ -155,7 +164,7 @@ for round_num in range(14):
                 del cards[0]
                 cards.append(ad2_card_rule)
         else:
-            raise Exception('')
+            raise Exception('adv2 exception')
 
         # Adversary 3 plays
         ad3_card_rule = adversary3.play()
@@ -167,24 +176,18 @@ for round_num in range(14):
                 del cards[0]
                 cards.append(ad3_card_rule)
         else:
-            raise Exception('')
-    except:
-        print('exception')
-'''
-    except:
+            print(ad3_card_rule)
+            raise Exception('adv3 exception')
+            
+    except Exception as e:
+        print(e)
         game_ended = True
         break
-'''
 
 # Everyone has to guess a rule
 rule_player = player.play()
 
-def scientist():
-    global S
-
-    S._phase1()
-    return S.hypothesis
 # Check if the guessed rule is correct and print the score
-scientist()
-print('score:', G.score(S.hypothesis))
-print('Final Hypothesis:', S.hypothesis)
+# print('score:', player.game.score(player.scientist.hypothesis))
+print('True rule:', tree)
+print('Final Hypothesis:', player.scientist.hypothesis)

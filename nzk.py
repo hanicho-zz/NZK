@@ -9,6 +9,7 @@ __license__ = 'GPLv3'
 
 import copy
 import random
+import sys
 import numpy as np
 from abc import ABC
 from functools import reduce
@@ -582,19 +583,19 @@ class Game(ABC):
 
     """
 
-    def __init__(self, rule, first, second):
+    def __init__(self, first, second):
         # assert rule.evaluate((None, None, first))
         # assert rule.evaluate((None, first, second))
 
-        self._rule = rule
+        # self._rule = rule
         self._board = [(first, []), (second, [])]
 
     def __repr__(self):
         return '<Game {0}, {1}>'.format(self._board, self._rule)
 
-    @property
-    def rule(self):
-        return self._rule
+#    @property
+#    def rule(self):
+#        return self._rule
 
     @property
     def board(self):
@@ -624,49 +625,47 @@ class Game(ABC):
 
         return self.history[-2][0]
 
-    def score(self, hypothesis):
-        """Computes the score of a given hypothesis
-
-        """
-
-        hist = self.history
-
-        assert len(hist) >= 20
-
-        score = 0
-        covers = True
-
-        for i in range(len(hist)):
-            # +1 for every successful play over 20 and under 200
-            # +2 for every failed play
-            if i >= 19 and i < 200:
-                if hist[i][1]:
-                    score += 1
-                else:
-                    score += 2
-
-            previous2 = hist[i-2][0] if i >= 2 else None
-            previous = hist[i-1][0] if i >= 1 else None
-            current = hist[i][0]
-
-            if 'previous2' in str(hypothesis) and previous2 is None:
-                continue
-            elif 'previous' in str(hypothesis) and previous is None:
-                continue
-
-            if (covers and
-                hypothesis.evaluate((previous2, previous, current)) != hist[i][1]):
-                covers = False
-
-        # +15 for a rule that is not equivalent to the correct rule
-        # +30 for a rule that does not describe all cards on the board
-        if not covers:
-            score += 45
-        else:
-            if not Game._rules_eq(self.rule, hypothesis):
-                score += 15
-
-        return score
+#    def score(self, hypothesis):
+#        """Computes the score of a given hypothesis
+#
+#        """
+#
+#        hist = self.history
+#
+#        score = 0
+#        covers = True
+#
+#        for i in range(len(hist)):
+#            # +1 for every successful play over 20 and under 200
+#            # +2 for every failed play
+#            if i >= 19 and i < 200:
+#                if hist[i][1]:
+#                    score += 1
+#                else:
+#                    score += 2
+#
+#            previous2 = hist[i-2][0] if i >= 2 else None
+#            previous = hist[i-1][0] if i >= 1 else None
+#            current = hist[i][0]
+#
+#            if 'previous2' in str(hypothesis) and previous2 is None:
+#                continue
+#            elif 'previous' in str(hypothesis) and previous is None:
+#                continue
+#
+#            if (covers and
+#                hypothesis.evaluate((previous2, previous, current)) != hist[i][1]):
+#                covers = False
+#
+#        # +15 for a rule that is not equivalent to the correct rule
+#        # +30 for a rule that does not describe all cards on the board
+#        if not covers:
+#            score += 45
+#        else:
+#            if not Game._rules_eq(self.rule, hypothesis):
+#                score += 15
+#
+#        return score
 
     def grams(self, n):
         """Compute n-grams of the board, mapped to legality
@@ -689,7 +688,7 @@ class Game(ABC):
 
         return grams
 
-    def play(self, card):
+    def play(self, card, legal):
         """Plays the card provided
 
         Args:
@@ -699,7 +698,7 @@ class Game(ABC):
             Whether the play was legal
         """
 
-        legal = self._rule.evaluate((self.previous2, self.previous, card))
+        # legal = self._rule.evaluate((self.previous2, self.previous, card))
 
         if legal:
             self._board.append((card, []))
@@ -788,8 +787,7 @@ class Scientist(ABC):
 
         return min(self.models, key=lambda model: len(model)).rule
 
-    @property
-    def choice(self):
+    def choice(self, hand):
         """Selects a card to play
 
         TODO:
@@ -798,22 +796,17 @@ class Scientist(ABC):
 
         """
 
-        deck = list(map(lambda p: ''.join(p),
-                        product(['A', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
-                                 'J', 'Q', 'K'],
-                                ['S', 'H', 'D', 'C'])))
-
         previous2 = self.game.previous2
         previous = self.game.previous
         plays = {}
 
-        for card in deck:
+        for card in hand:
             plays[card] = 0
 
         for model in self.models:
             hypothesis = model.rule
 
-            for card in deck:
+            for card in hand:
                 # Ignore plays we've already made
                 if model.latticizer.order == 3 and (previous2, previous, card) in self.played3:
                     continue
@@ -1091,60 +1084,60 @@ def legal_cards(rule, previous, previous2):
 
     return list(filter(lambda card: rule.evaluate((previous2, previous, card)), deck))
 
-G = None
-S = None
-
-def setRule(rule):
-    global G
-    global S
-    try:
-        rule = eleusis.parse(rule)
-        first = random.choice(legal_cards(rule, None, None))
-        second = random.choice(legal_cards(rule, first, None))
-    except:
-        card1 = input('Please input the first card:')
-        card2 = input('Please input the second card:')
-        first = card1
-        second = card2
-    G = Game(rule, first, second)
-    S = Scientist(G, [unigram, bigram])
-
-def rule():
-    global G
-
-    return G.rule
-
-def boardState():
-    global G
-
-    return G.board
-
-def play(card):
-    global G
-
-    return G.play(card)
-
-def scientist():
-    global S
-
-    S._phase1()
-    return S.hypothesis
-
-def score():
-    global G
-
-    return G.score(S.hypothesis)
-
-
-if __name__ == '__main__':
-    import sys
-
-    seed = random.randrange(sys.maxsize)
-    random.seed(seed)
-    print('==== {0} ====\n'.format(seed))
-
-    setRule('equal(color(previous), color(current))')
-    print('rule:', rule())
-    print('hypothesis:', scientist())
-    print('boardState:', boardState())
-    print('score:', score())
+#G = None
+#S = None
+#
+#def setRule(rule):
+#    global G
+#    global S
+#    try:
+#        rule = eleusis.parse(rule)
+#        first = random.choice(legal_cards(rule, None, None))
+#        second = random.choice(legal_cards(rule, first, None))
+#    except:
+#        card1 = input('Please input the first card:')
+#        card2 = input('Please input the second card:')
+#        first = card1
+#        second = card2
+#    G = Game(rule, first, second)
+#    S = Scientist(G, [unigram, bigram])
+#
+#def rule():
+#    global G
+#
+#    return G.rule
+#
+#def boardState():
+#    global G
+#
+#    return G.board
+#
+#def play(card):
+#    global G
+#
+#    return G.play(card)
+#
+#def scientist():
+#    global S
+#
+#    S._phase1()
+#    return S.hypothesis
+#
+#def score():
+#    global G
+#
+#    return G.score(S.hypothesis)
+#
+#
+#if __name__ == '__main__':
+#    import sys
+#
+#    seed = random.randrange(sys.maxsize)
+#    random.seed(seed)
+#    print('==== {0} ====\n'.format(seed))
+#
+#    setRule('equal(color(previous), color(current))')
+#    print('rule:', rule())
+#    print('hypothesis:', scientist())
+#    print('boardState:', boardState())
+#    print('score:', score())
