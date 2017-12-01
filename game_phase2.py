@@ -15,7 +15,7 @@ global game_ended
 game_ended = False
 
 def generate_random_card():
-    values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+    values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
     suits = ["S", "H", "D", "C"]
     return values[randint(0, len(values) - 1)] + suits[randint(0, len(suits) - 1)]
 
@@ -26,6 +26,8 @@ class Player(object):
     def __init__(self, cards):
         self.hand = [generate_random_card() for i in range(14)]
         self.game = nzk.Game(cards[0], cards[1])
+        self.game.play(cards[2], True)
+        
         self.scientist = nzk.Scientist(self.game, [nzk.unigram, nzk.bigram, nzk.trigram])
         self.threshold = 7
         self.counter = 0
@@ -52,6 +54,7 @@ class Player(object):
         self.game.play(card, result)
         self.scientist.update()
 
+
 class Adversary(object):
     def __init__(self):
         self.hand = [generate_random_card() for i in range(14)]
@@ -64,7 +67,7 @@ class Adversary(object):
         # Return a rule with a probability of 1/14
         prob_list = [i for i in range(14)]
         prob = prob_list[randint(0, 13)]
-        if prob == 4:
+        if prob == 100:
             # Generate a random rule
             rule = ""
             conditions = ["equal", "greater"]
